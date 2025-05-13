@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="https://webgl.com/nodeexperiment/datascience">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Science Node Experiment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      height: 100%;
+      overflow: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Default Mode */
+    body.default-mode {
+      background-color: #ffffff;
+      color: #333;
+    }
+    .default-mode h1 {
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        font-weight: 300;
+    }
+    .default-mode button { border-color: #333; color: #333; }
+    .default-mode button:hover { background-color: #333; color: #fff; }
+    .default-mode #screenshot { background-color: #f0f0f0; color: #333; }
+    .default-mode #screenshot:hover { background-color: #e0e0e0; }
+    .default-mode #theme-select { border-color: #ccc; color: #333; background-color: #fff;}
+
+
+    /* Anthropic Mode */
+    body.anthropic-mode {
+      background-color: #fafaf8;
+      color: #333;
+    }
+    .anthropic-mode h1 {
+      font-family: 'Gabarito', sans-serif;
+      font-weight: 600;
+    }
+    .anthropic-mode button { border-color: #db9885; color: #333; }
+    .anthropic-mode button:hover { background-color: #db9885; color: #fafaf8; }
+    .anthropic-mode #screenshot { background-color: rgba(219, 152, 133, 0.2); color: #333; border: 1px solid #db9885;}
+    .anthropic-mode #screenshot:hover { background-color: rgba(219, 152, 133, 0.4); }
+    .anthropic-mode #theme-select { border-color: #db9885; color: #333; background-color: #fafaf8;}
+
+
+    /* Gemini Mode */
+    body.gemini-mode {
+      background-color: #131314;
+      color: #E8EAED;
+    }
+    .gemini-mode h1 {
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 500;
+    }
+    .gemini-mode button { border-color: #89b4f8; color: #E8EAED; }
+    .gemini-mode button:hover { background-color: #89b4f8; color: #131314; }
+    .gemini-mode #screenshot { background-color: rgba(137, 180, 248, 0.2); color: #E8EAED; border: 1px solid #89b4f8;}
+    .gemini-mode #screenshot:hover { background-color: rgba(137, 180, 248, 0.4); }
+    .gemini-mode #theme-select { border-color: #89b4f8; color: #E8EAED; background-color: #131314;}
+
+
+    /* OpenAI Mode */
+    body.openai-mode {
+      background-color: #202123;
+      color: #ECECF1;
+    }
+     .openai-mode h1 {
+       font-family: 'Helvetica Neue', Arial, sans-serif;
+       font-weight: 500; /* Slightly bolder than default */
+     }
+    .openai-mode button { border-color: #565869; color: #ECECF1; }
+    .openai-mode button:hover { background-color: #565869; color: #202123; }
+    .openai-mode #screenshot { background-color: rgba(86, 88, 105, 0.2); color: #ECECF1; border: 1px solid #565869;}
+    .openai-mode #screenshot:hover { background-color: rgba(86, 88, 105, 0.4); }
+    .openai-mode #theme-select { border-color: #565869; color: #ECECF1; background-color: #202123;}
+
+    /* Dark Mode Override */
+    body.dark-mode {
+      background-color: #1a1a1a;
+      color: #f0f0f0;
+    }
+    .dark-mode h1 { /* Reverts to default font when dark mode is on */
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        font-weight: 300;
+    }
+    .dark-mode button {
+      border-color: #f0f0f0;
+      color: #f0f0f0;
+    }
+     .dark-mode button:hover {
+       background-color: #f0f0f0;
+       color: #1a1a1a;
+     }
+    .dark-mode #screenshot { background-color: #333; color: #f0f0f0; border: 1px solid #f0f0f0;}
+    .dark-mode #screenshot:hover { background-color: #555; }
+    .dark-mode #theme-select { border-color: #f0f0f0; color: #f0f0f0; background-color: #1a1a1a;}
+
+
+    #container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    h1 {
+      font-size: 24px;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 2;
+      transition: all 0.3s ease;
+    }
+    #graph {
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 2;
+      display: flex;
+      align-items: center; /* Align items vertically */
+      gap: 10px;
+    }
+     #controls label {
+        font-size: 14px;
+        margin-right: -5px; /* Adjust spacing */
+     }
+
+    #theme-select {
+        padding: 8px 15px; /* Adjusted padding */
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-radius: 20px;
+        background-color: transparent; /* Base background */
+        border: 1px solid; /* Border color set by mode */
+        outline: none;
+        appearance: none; /* Remove default arrow */
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 30px; /* Space for custom arrow if needed */
+        background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23cccccc%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Simple gray arrow */
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 10px 10px;
+    }
+     body.dark-mode #theme-select {
+         background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23555555%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); /* Darker arrow for dark mode */
+     }
+
+    #togglePainterly {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 2;
+      display: none; /* Initially hidden, shown by JS */
+      font-size: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+      opacity: 0.2;
+      color: inherit; /* Inherit color from body */
+    }
+    #togglePainterly:hover {
+      opacity: 1;
+    }
+    #screenshot {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 2;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      opacity: 0.9;
+    }
+    #screenshot:hover {
+      opacity: 1;
+    }
+    button { /* General button styling */
+      background-color: transparent;
+      border: 1px solid; /* Color determined by mode */
+      color: inherit; /* Color determined by mode */
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 20px;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    #search-container {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      display: flex;
+      gap: 10px;
+      opacity: 0; /* Initially hidden */
+      pointer-events: none; /* Initially non-interactive */
+      transition: opacity 0.5s ease;
+    }
+    #search-input {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid; /* Color set by mode */
+      border-radius: 20px;
+      outline: none;
+      width: 300px;
+      background-color: inherit; /* Match mode background */
+      color: inherit; /* Match mode text */
+    }
+     /* Specific border colors for search input */
+    .default-mode #search-input { border-color: #ccc; }
+    .anthropic-mode #search-input { border-color: #db9885; }
+    .gemini-mode #search-input { border-color: #89b4f8; }
+    .openai-mode #search-input { border-color: #565869; }
+    .dark-mode #search-input { border-color: #555; } /* Dark mode override */
+
+    #search-button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: 1px solid; /* Color set by mode */
+      color: inherit; /* Color set by mode */
+      border-radius: 20px;
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+      background-color: rgba(255, 255, 255, 0.1); /* Subtle background */
+    }
+    /* Specific search button styles per mode */
+     .default-mode #search-button { border-color: #ccc; background-color: rgba(51, 51, 51, 0.1); }
+     .default-mode #search-button:hover { background-color: rgba(51, 51, 51, 0.2); }
+     .anthropic-mode #search-button { border-color: #db9885; background-color: rgba(219, 152, 133, 0.2); }
+     .anthropic-mode #search-button:hover { background-color: rgba(219, 152, 133, 0.4); }
+     .gemini-mode #search-button { border-color: #89b4f8; background-color: rgba(137, 180, 248, 0.1); }
+     .gemini-mode #search-button:hover { background-color: rgba(137, 180, 248, 0.2); }
+     .openai-mode #search-button { border-color: #565869; background-color: rgba(86, 88, 105, 0.2); }
+     .openai-mode #search-button:hover { background-color: rgba(86, 88, 105, 0.4); }
+     .dark-mode #search-button { border-color: #555; background-color: rgba(240, 240, 240, 0.1); } /* Dark mode override */
+     .dark-mode #search-button:hover { background-color: rgba(240, 240, 240, 0.2); }
+
+
+    #shakeNodes {
+      font-family: monospace;
+      font-size: 18px;
+    }
+
+    /* Blur filter styling */
+     #graphContentContainer[filter*="url(#standbyBlurFilter)"] {
+         transition: filter 0.5s ease-in-out;
+     }
+     #graphContentContainer {
+         transition: filter 0.3s ease-in-out; /* Faster removal */
+     }
+
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.4/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <div id="container">
+    <h1 id="title">DATA SCIENCE NODE EXPERIMENT</h1>
+    <div id="graph"></div>
+    <div id="controls">
+      <label for="theme-select">Mode:</label>
+      <select id="theme-select">
+        <option value="default">Default</option>
+        <option value="anthropic">Anthropic Mode</option>
+        <option value="gemini">Gemini Mode</option>
+        <option value="openai">OpenAI Mode</option>
+      </select>
+      <button id="regenerate">Regenerate</button>
+      <button id="darkModeToggle">Dark Mode</button>
+      <button id="shakeNodes">≈≈≈</button>
+    </div>
+    <button id="togglePainterly">🖌️</button>
+    <button id="screenshot">📷</button>
+    <div id="search-container">
+      <input type="text" id="search-input" placeholder="Enter search term...">
+      <button id="search-button">Search</button>
+    </div>
+  </div>
+
+  <audio id="shakeSound" src="https://webgl.com/nodeexperiment/datascience/shake_sound.mp3" preload="auto"></audio>
+  <audio id="newNodeSound" src="https://webgl.com/nodeexperiment/datascience/new_node_sound.mp3" preload="auto"></audio>
+
+  <script>
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const svg = d3.select("#graph")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const defs = svg.append("defs");
+
+    const displacementFilter = defs.append("filter")
+      .attr("id", "displacementFilter");
+    displacementFilter.append("feTurbulence")
+      .attr("type", "turbulence")
+      .attr("baseFrequency", "0.01")
+      .attr("numOctaves", "3")
+      .attr("result", "turbulence");
+    displacementFilter.append("feDisplacementMap")
+      .attr("in2", "turbulence")
+      .attr("in", "SourceGraphic")
+      .attr("scale", "10")
+      .attr("xChannelSelector", "R")
+      .attr("yChannelSelector", "G");
+    displacementFilter.append("feGaussianBlur")
+      .attr("stdDeviation", "2");
+
+    const standbyBlurFilter = defs.append("filter")
+      .attr("id", "standbyBlurFilter");
+    standbyBlurFilter.append("feGaussianBlur")
+        .attr("in", "SourceGraphic")
+        .attr("stdDeviation", "3")
+        .attr("result", "blurred");
+
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 4])
+      .on("zoom", handleZoom);
+
+    svg.call(zoom);
+
+    const g = svg.append("g");
+    const graphContentContainer = g.append("g").attr("id", "graphContentContainer");
+
+    let nodes = [];
+    let links = [];
+    let nextNodeId = 0;
+
+    let currentVisualStyle = 'default';
+    let previousVisualStyle = 'default';
+    let isDarkMode = false;
+    let modelFeaturesEnabled = false;
+    let isPainterlyMode = true; // Default to true, can be toggled
+    let isSearchMode = false;
+    let shouldShowNodeText = true;
+
+    let draggedNode = null;
+    let lastMousePosition = { x: 0, y: 0 };
+    let shakeIntensity = 0;
+    let zoomLevel = 0;
+    let shakeCount = 0;
+    let lastSearchTerm = '';
+    let lastSearchResults = [];
+    let relatedWords = [];
+
+    const STANDBY_TIMEOUT = 25000;
+    let standbyTimer = null;
+
+    function resetStandbyTimer() {
+        clearTimeout(standbyTimer);
+        if (graphContentContainer.attr("filter") === "url(#standbyBlurFilter)") {
+            graphContentContainer.attr("filter", null); // Remove blur immediately
+             // Reapply painterly if it was active
+            if (isPainterlyMode && (currentVisualStyle === 'default' || modelFeaturesEnabled)) {
+                 graphContentContainer.attr("filter", "url(#displacementFilter)");
+            }
+        }
+        standbyTimer = setTimeout(applyStandbyBlur, STANDBY_TIMEOUT);
+    }
+
+    function applyStandbyBlur() {
+        // Only apply standby blur if painterly is not the active filter or painterly is off
+        const currentFilter = graphContentContainer.attr("filter");
+        if (!currentFilter || currentFilter !== "url(#displacementFilter)" || !isPainterlyMode) {
+            graphContentContainer.attr("filter", "url(#standbyBlurFilter)");
+        } else if (currentFilter === "url(#displacementFilter)" && !isPainterlyMode) {
+            // If painterly was on but now toggled off, standby can apply
+            graphContentContainer.attr("filter", "url(#standbyBlurFilter)");
+        }
+    }
+
+
+    function handleZoom(event) {
+        g.attr("transform", event.transform);
+        resetStandbyTimer();
+        if (modelFeaturesEnabled) {
+            handleModelZoom(event.transform);
+        }
+    }
+
+    async function createNode(x, y, name = null, parentNode = null) {
+      let nodeName = name;
+      if (modelFeaturesEnabled && !name && parentNode && relatedWords.length > 0) {
+        nodeName = getRandomRelatedWord();
+      } else if (!name) {
+          nodeName = `Node ${nextNodeId + 1}`;
+      }
+
+      const node = {
+        id: nextNodeId++,
+        name: nodeName,
+        group: Math.floor(Math.random() * 10),
+        x: x || Math.random() * width,
+        y: y || Math.random() * height,
+        velocity: { x: 0, y: 0 },
+        mass: Math.random() * 0.5 + 0.5,
+        opacity: isSearchMode && modelFeaturesEnabled ? 0 : 1
+      };
+
+      if (modelFeaturesEnabled && parentNode) {
+        const newRelatedWords = await fetchRelatedWords(parentNode.name);
+        relatedWords = [...new Set([...relatedWords, ...newRelatedWords])];
+      }
+      return node;
+    }
+
+    function generateRandomShape() {
+      const nodeCount = Math.floor(Math.random() * 30) + 20;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(width, height) / 4;
+      return Array.from({ length: nodeCount }, (_, i) => {
+        const angle = (i / nodeCount) * 2 * Math.PI;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        return createNode(x, y, null, null);
+      });
+    }
+
+    function generateLinks(nodes) {
+      const links = [];
+      if (nodes.length < 2) return links;
+      nodes.forEach((source, i) => {
+        const targetCount = Math.floor(Math.random() * 3) + 1;
+        for (let j = 0; j < targetCount; j++) {
+          let targetIndex = (i + j + 1 + Math.floor(Math.random() * (nodes.length - 1))) % nodes.length;
+          if (targetIndex === i) targetIndex = (i + 1) % nodes.length;
+          const target = nodes[targetIndex];
+          if (source.id !== target.id) links.push({ source: source.id, target: target.id });
+        }
+      });
+      return links;
+    }
+
+    let simulation;
+
+    async function updateGraph() {
+      isSearchMode = false;
+      shouldShowNodeText = true;
+      lastSearchTerm = '';
+      lastSearchResults = [];
+      relatedWords = [];
+
+      const initialNodesPromises = generateRandomShape();
+      nodes = await Promise.all(initialNodesPromises);
+      links = generateLinks(nodes);
+
+      graphContentContainer.selectAll("*").remove();
+
+      simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(30).strength(0.6))
+        .force("charge", d3.forceManyBody().strength(-30))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide().radius(6))
+        .alphaTarget(0.1)
+        .velocityDecay(0.1);
+
+      updateVisuals();
+      simulation.alpha(1).restart();
+    }
+
+    function getNodeColor(d) {
+        if (isDarkMode) return d3.schemeCategory10[d.group % 10];
+        switch (currentVisualStyle) {
+            case 'anthropic': return '#db9885';
+            case 'gemini':    return '#89b4f8';
+            case 'openai':    return '#565869';
+            default:          return d3.schemeCategory10[d.group % 10];
+        }
+    }
+
+    function getLinkColor() {
+        if (isDarkMode) return "#4a4a4a";
+        switch (currentVisualStyle) {
+            case 'anthropic': return '#db9885';
+            case 'gemini':    return '#89b4f8';
+            case 'openai':    return '#565869';
+            default:          return '#e0e0e0';
+        }
+    }
+
+    function getTextColor() {
+        if (isDarkMode) return "#f0f0f0";
+         switch (currentVisualStyle) {
+             case 'gemini': return '#E8EAED';
+             case 'openai': return '#ECECF1';
+             default:       return '#333';
+         }
+    }
+
+    function updateVisuals() {
+      const link = graphContentContainer.selectAll("line")
+        .data(links, d => `${d.source.id}-${d.target.id}`);
+      link.exit().remove();
+      link.enter().append("line")
+        .merge(link)
+        .attr("stroke", getLinkColor())
+        .attr("stroke-width", 0.5);
+
+      const node = graphContentContainer.selectAll("circle")
+        .data(nodes, d => d.id);
+      node.exit().remove();
+      node.enter().append("circle")
+        .attr("r", 4)
+        .style("opacity", 0)
+        .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended))
+        .on("mouseover", handleMouseOver).on("mouseout", handleMouseOut)
+        .merge(node)
+          .attr("fill", d => getNodeColor(d))
+          .transition().duration(500)
+          .style("opacity", d => d.opacity);
+
+      const label = graphContentContainer.selectAll("text.node-label")
+        .data(nodes, d => d.id);
+      label.exit().remove();
+      label.enter().append("text")
+        .attr("class", "node-label")
+        .attr("dx", 8).attr("dy", ".35em")
+        .style("font-size", "10px").style("pointer-events", "none").style("opacity", 0)
+        .merge(label)
+         .text(d => (modelFeaturesEnabled && isSearchMode && shouldShowNodeText) ? d.name : "")
+         .style("fill", getTextColor())
+         .transition().duration(500)
+         .style("opacity", d => d.opacity);
+
+      // Apply painterly filter
+      if (isPainterlyMode && (currentVisualStyle === 'default' || modelFeaturesEnabled)) {
+        graphContentContainer.attr("filter", "url(#displacementFilter)");
+      } else if (graphContentContainer.attr("filter") !== "url(#standbyBlurFilter)") { // Don't remove standby blur
+        graphContentContainer.attr("filter", null);
+      }
+
+
+      if (simulation) {
+          simulation.nodes(nodes);
+          simulation.force("link").links(links);
+          if (!simulation.alpha() > 0) simulation.alpha(0.3).restart();
+          simulation.on("tick", ticked);
+      }
+    }
+
+     function ticked() {
+        applyShake();
+        graphContentContainer.selectAll("line")
+          .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+        graphContentContainer.selectAll("circle")
+          .attr("cx", d => d.x).attr("cy", d => d.y);
+        graphContentContainer.selectAll("text.node-label")
+          .attr("x", d => d.x).attr("y", d => d.y);
+    }
+
+    function handleMouseOver(event, d) {
+      d3.select(this).transition().duration(200).attr("r", 6);
+    }
+    function handleMouseOut(event, d) {
+      d3.select(this).transition().duration(200).attr("r", 4);
+    }
+
+    function handleMouseMove(event) {
+      resetStandbyTimer();
+      const [mouseX, mouseY] = d3.pointer(event, g.node());
+      const sensitivity = ((currentVisualStyle === 'default' || modelFeaturesEnabled) && isPainterlyMode) ? 100 : 50;
+
+      nodes.forEach(node => {
+        const dx = mouseX - node.x; const dy = mouseY - node.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < sensitivity) {
+          const factor = 1 - distance / sensitivity;
+          node.vx -= dx * factor * 0.005; node.vy -= dy * factor * 0.005;
+          if (((currentVisualStyle === 'default' || modelFeaturesEnabled)) && isPainterlyMode) {
+            node.vx += (Math.random() - 0.5) * 1; node.vy += (Math.random() - 0.5) * 1;
+          }
+        }
+      });
+      if (simulation && simulation.alpha() < 0.1) simulation.alphaTarget(0.1).restart();
+    }
+
+    function applyShake() {
+      if (shakeIntensity > 0) {
+        nodes.forEach(node => {
+          node.vx += (Math.random() - 0.5) * shakeIntensity * 0.5;
+          node.vy += (Math.random() - 0.5) * shakeIntensity * 0.5;
+        });
+        shakeIntensity *= 0.9;
+        if (shakeIntensity < 0.05) shakeIntensity = 0;
+      }
+    }
+
+    function dragstarted(event, d) {
+      resetStandbyTimer();
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x; d.fy = d.y;
+      draggedNode = d;
+      lastMousePosition = { x: event.x, y: event.y };
+
+      // Temporarily increase repulsion during drag for "unclustering" effect
+      if (simulation) {
+          const baseStrength = (isSearchMode && modelFeaturesEnabled) ? -180 : -30; // Current base
+          simulation.force("charge").strength(baseStrength - 120); // Make more repulsive
+          simulation.alpha(Math.max(simulation.alpha(), 0.3)).restart(); // Give it a kick
+      }
+    }
+
+    function dragged(event, d) {
+      resetStandbyTimer();
+      d.fx = event.x; d.fy = event.y;
+
+      if (modelFeaturesEnabled) { // Only add nodes on drag in model modes
+          const dx = event.x - lastMousePosition.x;
+          const dy = event.y - lastMousePosition.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance > 35) { // Slightly reduced threshold
+            addNode(event.x + (Math.random()-0.5)*10, event.y + (Math.random()-0.5)*10, d);
+            lastMousePosition = { x: event.x, y: event.y };
+          }
+      }
+    }
+
+    function dragended(event, d) {
+      resetStandbyTimer();
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null; d.fy = null;
+      draggedNode = null;
+
+      // Restore original charge strength
+      if (simulation) {
+          const chargeStrength = (isSearchMode && modelFeaturesEnabled) ? -180 : -30;
+          simulation.force("charge").strength(chargeStrength);
+          if (!event.active) simulation.alphaTarget(0); else simulation.alpha(0.3).restart();
+      }
+    }
+
+    async function addNode(x, y, parentNode = null) {
+      const newNode = await createNode(x, y, null, parentNode);
+      nodes.push(newNode);
+      if (parentNode) links.push({ source: newNode.id, target: parentNode.id });
+
+      const potentialTargets = nodes.filter(n => n.id !== newNode.id && n.id !== parentNode?.id);
+      const linkCount = Math.min(potentialTargets.length, Math.floor(Math.random() * 2));
+      for (let i = 0; i < linkCount; i++) {
+          const targetIndex = Math.floor(Math.random() * potentialTargets.length);
+          links.push({ source: newNode.id, target: potentialTargets[targetIndex].id });
+          potentialTargets.splice(targetIndex, 1);
+      }
+      updateVisuals();
+      simulation.alpha(1).restart();
+      if (newNode.opacity === 0) {
+          newNode.opacity = 1;
+          graphContentContainer.selectAll('circle, text.node-label').filter(item => item.id === newNode.id)
+              .transition().duration(500).style('opacity', 1);
+      }
+      document.getElementById('newNodeSound').play().catch(e => {});
+    }
+
+    function applyVisualStyle(style) {
+        currentVisualStyle = style;
+        isDarkMode = false;
+        modelFeaturesEnabled = ['anthropic', 'gemini', 'openai'].includes(style);
+        document.body.className = `${style}-mode`;
+
+        const titleElement = document.getElementById('title');
+        switch (style) {
+            case 'anthropic': titleElement.textContent = 'ANTHROPIC MODE'; break;
+            case 'gemini':    titleElement.textContent = 'GEMINI MODE'; break;
+            case 'openai':    titleElement.textContent = 'OPENAI MODE'; break;
+            default:          titleElement.textContent = 'DATA SCIENCE NODE EXPERIMENT'; break;
+        }
+
+        const searchContainer = document.getElementById('search-container');
+        const togglePainterlyButton = document.getElementById('togglePainterly');
+
+        if (modelFeaturesEnabled) {
+            searchContainer.style.opacity = '1';
+            searchContainer.style.pointerEvents = 'auto';
+        } else {
+            searchContainer.style.opacity = '0';
+            searchContainer.style.pointerEvents = 'none';
+            isSearchMode = false; relatedWords = []; lastSearchTerm = '';
+            document.getElementById('search-input').value = '';
+        }
+        // Show Painterly button for model modes OR default mode
+        if (modelFeaturesEnabled || style === 'default') {
+            togglePainterlyButton.style.display = 'block';
+        } else {
+            togglePainterlyButton.style.display = 'none';
+        }
+
+
+        document.getElementById('darkModeToggle').textContent = 'Dark Mode';
+        document.getElementById('theme-select').value = style;
+        updateVisuals();
+        resetStandbyTimer();
+    }
+
+    function toggleDarkMode() {
+        isDarkMode = !isDarkMode;
+        if (isDarkMode) {
+            previousVisualStyle = currentVisualStyle;
+            currentVisualStyle = 'default';
+            modelFeaturesEnabled = false; isSearchMode = false;
+            document.body.className = 'default-mode dark-mode';
+            document.getElementById('title').textContent = 'DATA SCIENCE NODE EXPERIMENT';
+            document.getElementById('search-container').style.opacity = '0';
+            document.getElementById('search-container').style.pointerEvents = 'none';
+            document.getElementById('togglePainterly').style.display = 'none'; // Hide painterly in dark mode
+            document.getElementById('search-input').value = '';
+            document.getElementById('darkModeToggle').textContent = 'Light Mode';
+            document.getElementById('theme-select').value = 'default';
+        } else {
+             applyVisualStyle(previousVisualStyle || 'default');
+        }
+        updateVisuals();
+        resetStandbyTimer();
+    }
+
+    function togglePainterly() {
+      // Allow toggle if in default or a model mode (painterly button is only visible then)
+      if (currentVisualStyle === 'default' || modelFeaturesEnabled) {
+          isPainterlyMode = !isPainterlyMode;
+          updateVisuals();
+      }
+    }
+
+    async function shakeNodes() {
+      shakeIntensity = 5;
+      if(simulation) simulation.alpha(1).restart();
+      document.getElementById('shakeSound').play().catch(e => {});
+      shakeCount++;
+      if (modelFeaturesEnabled) {
+          if (shakeCount % 8 === 0 && nodes.length > 0) {
+              const parentNode = nodes[Math.floor(Math.random() * nodes.length)];
+              await addNode(parentNode.x + (Math.random() - 0.5) * 100, parentNode.y + (Math.random() - 0.5) * 100, parentNode);
+          }
+          if (shakeCount % 20 === 0 && nodes.length > 0) {
+             const centerNode = nodes[Math.floor(Math.random() * nodes.length)];
+             await createNewCluster(centerNode.x + (Math.random() - 0.5) * 150, centerNode.y + (Math.random() - 0.5) * 150);
+          }
+         if (isSearchMode) {
+            nodes.forEach(n => n.opacity = 1);
+             graphContentContainer.selectAll("circle, text.node-label")
+                 .transition().duration(300).style("opacity", 1);
+          }
+      }
+      resetStandbyTimer();
+    }
+
+    function handleModelZoom(transform) {
+      const scale = transform.k;
+      const newZoomLevel = Math.floor(Math.log2(scale) * 2);
+      if (newZoomLevel > zoomLevel && nodes.length > 0) {
+        zoomLevel = newZoomLevel;
+        const centerCoords = d3.zoomTransform(svg.node()).invert([width / 2, height / 2]);
+        createNewCluster(centerCoords[0], centerCoords[1]);
+      } else if (scale < 1) {
+          zoomLevel = Math.max(0, newZoomLevel);
+      }
+    }
+
+    async function createNewCluster(x, y) {
+      const clusterSize = Math.floor(Math.random() * 8) + 4;
+      const parentNode = nodes.length > 0 ? nodes[Math.floor(Math.random() * nodes.length)] : null;
+      const clusterNodesPromises = Array.from({ length: clusterSize }, () => {
+        const offsetX = (Math.random() - 0.5) * 50; const offsetY = (Math.random() - 0.5) * 50;
+        return createNode(x + offsetX, y + offsetY, null, parentNode);
+      });
+      const clusterNodes = await Promise.all(clusterNodesPromises);
+      nodes = nodes.concat(clusterNodes);
+      const newLinks = [];
+      clusterNodes.forEach(node => {
+          const potentialTargets = clusterNodes.filter(target => target.id !== node.id);
+          const linkCount = Math.min(potentialTargets.length, Math.floor(Math.random() * 2) + 1);
+           for (let i = 0; i < linkCount; i++) {
+              const targetIndex = Math.floor(Math.random() * potentialTargets.length);
+              newLinks.push({ source: node.id, target: potentialTargets[targetIndex].id });
+              potentialTargets.splice(targetIndex, 1);
+           }
+          if (parentNode && Math.random() < 0.3) newLinks.push({ source: node.id, target: parentNode.id });
+      });
+      links = links.concat(newLinks);
+      updateVisuals();
+      if(simulation) simulation.alpha(1).restart();
+    }
+
+    async function fetchRelatedWords(term) {
+      if (!modelFeaturesEnabled) return [];
+      try {
+        const response = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(term)}&max=20`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        return data.map(item => item.word);
+      } catch (error) { console.error('Error fetching related words:', error); return []; }
+    }
+
+    function getRandomRelatedWord() {
+      if (!modelFeaturesEnabled || relatedWords.length === 0) return `Node ${nextNodeId + 1}`;
+      return relatedWords[Math.floor(Math.random() * relatedWords.length)];
+    }
+
+    async function performSearch() {
+      if (!modelFeaturesEnabled) return;
+      const searchTerm = document.getElementById('search-input').value.trim();
+      if (!searchTerm) return;
+
+      isSearchMode = true; lastSearchTerm = searchTerm; shouldShowNodeText = true; relatedWords = [];
+      nodes = []; links = []; nextNodeId = 0;
+
+      try {
+        const response = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(searchTerm)}&max=15`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        lastSearchResults = data;
+
+        const centralNode = await createNode(width / 2, height / 2, searchTerm);
+        centralNode.opacity = 1; nodes.push(centralNode);
+        relatedWords = await fetchRelatedWords(searchTerm);
+
+        const relatedNodePromises = data.map(async (word, i) => {
+          const angle = (i / data.length) * 2 * Math.PI;
+          const radius = Math.min(width, height) / 3.0; // Adjusted radius
+          const x = width / 2 + Math.cos(angle) * radius + (Math.random() - 0.5) * 50;
+          const y = height / 2 + Math.sin(angle) * radius + (Math.random() - 0.5) * 50;
+          const relatedNode = await createNode(x, y, word.word, centralNode);
+          relatedNode.opacity = 0; return relatedNode;
+        });
+        const relatedNodes = await Promise.all(relatedNodePromises);
+        nodes = nodes.concat(relatedNodes);
+
+        relatedNodes.forEach(relatedNode => links.push({ source: centralNode.id, target: relatedNode.id }));
+
+        // Add sparse links between related nodes to break spider-web
+        relatedNodes.forEach((node1, i) => {
+            for (let j = i + 1; j < relatedNodes.length; j++) {
+                const node2 = relatedNodes[j];
+                if (Math.random() < 0.15) { // 15% chance to link two related nodes
+                    links.push({ source: node1.id, target: node2.id });
+                }
+            }
+        });
+
+        if (!simulation) {
+             simulation = d3.forceSimulation(nodes) // Should not happen here ideally
+                 .force("link", d3.forceLink(links).id(d => d.id))
+                 .force("charge", d3.forceManyBody())
+                 .force("center", d3.forceCenter(width / 2, height / 2))
+                 .force("collision", d3.forceCollide().radius(6));
+        }
+        simulation.nodes(nodes);
+        simulation.force("link", d3.forceLink(links).id(d => d.id).distance(120).strength(0.2)); // Tweaked for search
+        simulation.force("charge", d3.forceManyBody().strength(-180)); // Tweaked for search
+        simulation.force("center", d3.forceCenter(width / 2, height / 2));
+        simulation.alpha(1).restart();
+        updateVisuals();
+        lazyLoadNodes();
+      } catch (error) { console.error('Error performing search:', error); isSearchMode = false; }
+      resetStandbyTimer();
+    }
+
+    function lazyLoadNodes() {
+        if (!modelFeaturesEnabled || !isSearchMode) return;
+        const invisibleNodes = nodes.filter(d => d.opacity === 0);
+        if (invisibleNodes.length > 0) {
+            const nodesToReveal = invisibleNodes.slice(0, Math.ceil(invisibleNodes.length * 0.3));
+            nodesToReveal.forEach(node => node.opacity = 1 );
+            graphContentContainer.selectAll("circle")
+                .filter(d => nodesToReveal.some(n => n.id === d.id))
+                .transition().duration(1000).style("opacity", 1);
+             graphContentContainer.selectAll("text.node-label")
+                 .filter(d => nodesToReveal.some(n => n.id === d.id))
+                 .transition().duration(1000).style("opacity", 1);
+        }
+    }
+
+    function takeScreenshot() {
+      html2canvas(document.body, { useCORS: true, backgroundColor: null })
+      .then(canvas => {
+        const link = document.createElement('a');
+        link.download = `node_experiment_${currentVisualStyle}${isDarkMode ? '_dark' : ''}_screenshot.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      }).catch(err => console.error("Screenshot failed:", err));
+    }
+
+    document.getElementById("regenerate").addEventListener("click", () => { updateGraph(); resetStandbyTimer(); });
+    document.getElementById("darkModeToggle").addEventListener("click", toggleDarkMode);
+    document.getElementById("shakeNodes").addEventListener("click", shakeNodes);
+    document.getElementById("togglePainterly").addEventListener("click", togglePainterly);
+    document.getElementById("search-button").addEventListener("click", performSearch);
+    document.getElementById("screenshot").addEventListener("click", takeScreenshot);
+    document.getElementById("theme-select").addEventListener("change", (event) => applyVisualStyle(event.target.value));
+    document.getElementById("search-input").addEventListener("keyup", (event) => {
+      if (event.key === "Enter" && modelFeaturesEnabled) performSearch();
+    });
+
+    svg.on("mousemove", handleMouseMove);
+
+    window.addEventListener("resize", () => {
+      const newWidth = window.innerWidth; const newHeight = window.innerHeight;
+      svg.attr("width", newWidth).attr("height", newHeight);
+      if (simulation) {
+          simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+          simulation.alpha(0.5).restart();
+      }
+       resetStandbyTimer();
+    });
+
+    applyVisualStyle('default');
+    updateGraph();
+    setInterval(lazyLoadNodes, 2500);
+    resetStandbyTimer();
+
+  </script>
+</body>
+</html>
